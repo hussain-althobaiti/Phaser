@@ -244,7 +244,7 @@ class GameScene extends Phaser.Scene {
         this.levelText = this.add.text(650, 16, `Level ${this.level}/10`, { fontSize: '24px', fill: '#FFF' });
         this.levelText.setScrollFactor(0);
 
-        // Add Mobile Controls
+        // Add Mobile Controls (DOM-based)
         this.createMobileControls();
     }
 
@@ -270,34 +270,23 @@ class GameScene extends Phaser.Scene {
         this.moveRight = false;
         this.moveUp = false;
 
-        let btnSize = 60; // Button size
-        const uiDepth = 1000;
-
-        // Left button
-        let leftButton = this.add.rectangle(50, 540, btnSize, btnSize, 0x6666ff).setInteractive();
-        leftButton.on('pointerdown', () => this.moveLeft = true);
-        leftButton.on('pointerup', () => this.moveLeft = false);
-        leftButton.on('pointerout', () => this.moveLeft = false);
-        leftButton.setScrollFactor(0).setDepth(uiDepth);
-
-        // Right button
-        let rightButton = this.add.rectangle(130, 540, btnSize, btnSize, 0x6666ff).setInteractive();
-        rightButton.on('pointerdown', () => this.moveRight = true);
-        rightButton.on('pointerup', () => this.moveRight = false);
-        rightButton.on('pointerout', () => this.moveRight = false);
-        rightButton.setScrollFactor(0).setDepth(uiDepth);
-
-        // Jump button
-        let upButton = this.add.rectangle(700, 540, btnSize, btnSize, 0xff6666).setInteractive();
-        upButton.on('pointerdown', () => this.moveUp = true);
-        upButton.on('pointerup', () => this.moveUp = false);
-        upButton.on('pointerout', () => this.moveUp = false);
-        upButton.setScrollFactor(0).setDepth(uiDepth);
-
-        // Add button labels
-        this.add.text(40, 530, "←", { fontSize: '32px', fill: '#FFF' }).setScrollFactor(0).setDepth(uiDepth);
-        this.add.text(120, 530, "→", { fontSize: '32px', fill: '#FFF' }).setScrollFactor(0).setDepth(uiDepth);
-        this.add.text(690, 530, "↑", { fontSize: '32px', fill: '#FFF' }).setScrollFactor(0).setDepth(uiDepth);
+        const left = document.getElementById('btn-left');
+        const right = document.getElementById('btn-right');
+        const jump = document.getElementById('btn-jump');
+        const add = (el, downCb, upCb) => {
+            if (!el) return;
+            const down = (e) => { e.preventDefault(); downCb(); };
+            const up = (e) => { e.preventDefault(); upCb(); };
+            el.addEventListener('touchstart', down, { passive: false });
+            el.addEventListener('touchend', up, { passive: false });
+            el.addEventListener('touchcancel', up, { passive: false });
+            el.addEventListener('mousedown', down);
+            el.addEventListener('mouseup', up);
+            el.addEventListener('mouseleave', up);
+        };
+        add(left, () => { this.moveLeft = true; }, () => { this.moveLeft = false; });
+        add(right, () => { this.moveRight = true; }, () => { this.moveRight = false; });
+        add(jump, () => { this.moveUp = true; }, () => { this.moveUp = false; });
     }
 
     generatePlatformsFromLevel(level) {
