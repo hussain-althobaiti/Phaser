@@ -35,7 +35,7 @@
             backdrop-filter: blur(2px);
             touch-action: auto;
         }
-        #mute-btn { cursor: pointer; width:40px;height:40px;font-size:18px;border-radius:8px;border:1px solid rgba(255,255,255,0.5);background:rgba(255,255,255,0.12); display:flex;align-items:center;justify-content:center; }
+        .ui-btn { cursor: pointer; width:40px;height:40px;font-size:18px;border-radius:8px;border:1px solid rgba(255,255,255,0.5);background:rgba(255,255,255,0.12); display:flex;align-items:center;justify-content:center; }
         #mute-btn.muted { background: rgba(220,0,0,0.35); border-color: rgba(255,80,80,0.9); }
         #vol { width: 180px; height: 34px; touch-action: auto; appearance: none; -webkit-appearance: none; background: transparent; }
         #vol::-webkit-slider-thumb { appearance: none; -webkit-appearance: none; width: 24px; height: 24px; background: #fff; border-radius: 50%; border: 2px solid #09f; margin-top: -8px; }
@@ -66,7 +66,8 @@
 <body>
     <!-- Phaser will auto-inject the game canvas here -->
     <div id="audio-ui">
-        <button id="mute-btn" aria-label="mute">🔈</button>
+        <button id="home-btn" class="ui-btn" aria-label="home">🏠</button>
+        <button id="mute-btn" class="ui-btn" aria-label="mute">🔈</button>
         <input id="vol" type="range" min="0" max="1" step="0.05" value="0.5" />
         <span id="vol-label">50%</span>
     </div>

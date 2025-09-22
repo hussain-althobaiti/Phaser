@@ -11,6 +11,7 @@ function setMaxUnlockedLevel(n) {
 function wireAudioUI(sound) {
     if (!sound) return;
     const muteBtn = document.getElementById('mute-btn');
+    const homeBtn = document.getElementById('home-btn');
     const volRange = document.getElementById('vol');
     const volLabel = document.getElementById('vol-label');
 
@@ -27,6 +28,17 @@ function wireAudioUI(sound) {
 
     // attach listeners only once
     if (!window.__audioUiBound) {
+        if (homeBtn) {
+            homeBtn.onpointerdown = () => {
+                try {
+                    // go to StartScene from any scene
+                    const game = Phaser.GAMES?.[0];
+                    const scenePlugin = game?.scene;
+                    const activeScene = scenePlugin?.getScenes(true)?.[0];
+                    activeScene?.scene.start('StartScene');
+                } catch (e) {}
+            };
+        }
         if (muteBtn) {
             muteBtn.onpointerdown = () => {
                 sound.mute = !sound.mute;
