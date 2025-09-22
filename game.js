@@ -7,6 +7,56 @@ function setMaxUnlockedLevel(n) {
     } catch (e) {}
 }
 
+// Wire audio UI once and keep it in sync across scenes
+function wireAudioUI(sound) {
+    if (!sound) return;
+    const muteBtn = document.getElementById('mute-btn');
+    const volRange = document.getElementById('vol');
+    const volLabel = document.getElementById('vol-label');
+
+    const syncAll = () => {
+        const vol = typeof sound.volume === 'number' ? sound.volume : 0.5;
+        if (volRange) volRange.value = String(vol);
+        if (volLabel) volLabel.textContent = `${Math.round(vol * 100)}%`;
+        const isMutedUI = sound.mute || vol <= 0.001;
+        if (muteBtn) {
+            muteBtn.textContent = isMutedUI ? '🔇' : '🔈';
+            muteBtn.classList.toggle('muted', isMutedUI);
+        }
+    };
+
+    // attach listeners only once
+    if (!window.__audioUiBound) {
+        if (muteBtn) {
+            muteBtn.onpointerdown = () => {
+                sound.mute = !sound.mute;
+                localStorage.setItem('gameMuted', sound.mute ? '1' : '0');
+                syncAll();
+            };
+        }
+        if (volRange) {
+            const update = (val) => {
+                const clamped = Math.max(0, Math.min(1, Number(val)));
+                sound.volume = clamped;
+                // also set on bgm if present
+                sound.sounds?.forEach(s => { if (s.key === 'bgm_game' && typeof s.setVolume === 'function') s.setVolume(clamped); });
+                localStorage.setItem('gameVolume', String(clamped));
+                if (volLabel) volLabel.textContent = `${Math.round(clamped * 100)}%`;
+                if (muteBtn) {
+                    const isMutedUI = sound.mute || clamped <= 0.001;
+                    muteBtn.textContent = isMutedUI ? '🔇' : '🔈';
+                    muteBtn.classList.toggle('muted', isMutedUI);
+                }
+            };
+            volRange.addEventListener('input', (e) => update(e.target.value));
+            volRange.addEventListener('change', (e) => update(e.target.value));
+        }
+        window.__audioUiBound = true;
+    }
+
+    syncAll();
+}
+
 // Fixed levels data: 10 levels from easy to harder
 const LEVELS = [
     // Level 1
@@ -113,6 +163,20 @@ class StartScene extends Phaser.Scene {
         this.cameras.main.setBackgroundColor('#0b1020');
         this.cameras.main.fadeIn(400, 0, 0, 0);
 
+        // Sync audio UI on start screen and ensure bgm if allowed
+        try {
+            const savedVol = Number(localStorage.getItem('gameVolume'));
+            if (!Number.isNaN(savedVol)) this.sound.volume = savedVol;
+            const savedMute = localStorage.getItem('gameMuted') === '1';
+            this.sound.mute = savedMute;
+            wireAudioUI(this.sound);
+            if (this.cache.audio?.exists('bgm_game') && !this.sound.get('bgm_game')) {
+                const bgm = this.sound.add('bgm_game', { loop: true, volume: this.sound.volume ?? 0.5 });
+                // Will actually play after unlock if needed
+                if (!this.sound.locked) bgm.play();
+            }
+        } catch (e) {}
+
         // Star particles background (guarded)
         try {
             const particles = this.add.particles(0, 0, 'star');
@@ -179,6 +243,9 @@ class LevelSelectScene extends Phaser.Scene {
     }
 
     create() {
+        // Ensure audio UI is synced here as well
+        try { wireAudioUI(this.sound); } catch (e) {}
+
         const cols = 5;
         const rows = 2;
         const cellW = 120;
@@ -239,16 +306,23 @@ class GameScene extends Phaser.Scene {
             this.sound.mute = savedMute;
 
             if (this.cache.audio.exists('bgm_game')) {
-                const bgm = this.sound.add('bgm_game', { loop: true, volume: 0.4 });
+                const bgm = this.sound.add('bgm_game', { loop: true, volume: this.sound.volume ?? 0.5 });
                 bgm.play();
             }
         }
+
+        // ensure audio UI is wired and in sync
+        wireAudioUI(this.sound);
 
         // Wire audio UI if exists
         const muteBtn = document.getElementById('mute-btn');
         const volRange = document.getElementById('vol');
         if (muteBtn) {
-            const syncIcon = () => muteBtn.textContent = this.sound.mute ? '🔇' : '🔈';
+            const syncIcon = () => {
+                const isMutedUI = this.sound.mute || (this.sound.volume ?? 0) <= 0.001;
+                muteBtn.textContent = isMutedUI ? '🔇' : '🔈';
+                muteBtn.classList.toggle('muted', isMutedUI); // أحمر = ميوت
+            };
             syncIcon();
             // immediate mute toggle on pointerdown for faster response
             muteBtn.onpointerdown = () => {
@@ -258,15 +332,30 @@ class GameScene extends Phaser.Scene {
             };
         }
         if (volRange) {
-            // default to 0.5 if no saved value
-            const v = this.sound.volume ?? 0.5;
+            // prefer current bgm volume if exists
+            const bgm = this.sound.get('bgm_game');
+            const initial = (bgm && typeof bgm.volume === 'number') ? bgm.volume : (this.sound.volume ?? 0.5);
+            const v = Math.max(0, Math.min(1, Number(initial)));
             this.sound.volume = v;
             volRange.value = String(v);
-            volRange.oninput = (e) => {
-                const val = Number(e.target.value);
-                this.sound.volume = val;
-                localStorage.setItem('gameVolume', String(val));
+            const volLabel = document.getElementById('vol-label');
+            if (volLabel) volLabel.textContent = `${Math.round(v * 100)}%`;
+            const update = (val) => {
+                const clamped = Math.max(0, Math.min(1, Number(val)));
+                this.sound.volume = clamped; // global multiplier
+                // also set directly on bgm to avoid any driver inconsistencies
+                this.sound.sounds.forEach(s => { if (s.key === 'bgm_game') s.setVolume(clamped); });
+                localStorage.setItem('gameVolume', String(clamped));
+                if (volLabel) volLabel.textContent = `${Math.round(clamped * 100)}%`;
+                volRange.value = String(clamped);
+                if (muteBtn) {
+                    const isMutedUI = this.sound.mute || clamped <= 0.001;
+                    muteBtn.textContent = isMutedUI ? '🔇' : '🔈';
+                    muteBtn.classList.toggle('muted', isMutedUI);
+                }
             };
+            volRange.addEventListener('input', (e) => update(e.target.value));
+            volRange.addEventListener('change', (e) => update(e.target.value));
         }
 
         // Platforms
