@@ -60,6 +60,11 @@
 
         @media (max-width: 420px){ .mc-btn{ width:110px; height:110px; font-size:36px; } }
     </style>
+    <!-- Preload audio files at page load for faster first play -->
+    <link rel="preload" as="audio" href="assets/bgm_game.mp3" type="audio/mpeg">
+    <link rel="preload" as="audio" href="assets/sfx_collect.mp3" type="audio/mpeg">
+    <link rel="preload" as="audio" href="assets/sfx_jump.mp3" type="audio/mpeg">
+    <link rel="preload" as="audio" href="assets/sfx_win.mp3" type="audio/mpeg">
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.80.0/dist/phaser.min.js"></script>
 </head>
 <body>
