@@ -255,13 +255,18 @@ class StartScene extends Phaser.Scene {
         this.input.once('pointerdown', () => {
             const go = () => {
                 // ensure audio settings applied and bgm started on first interaction (desktop policies)
-                const savedVol = Number(localStorage.getItem('gameVolume'));
-                if (!Number.isNaN(savedVol)) this.sound.volume = savedVol;
-                const savedMute = localStorage.getItem('gameMuted') === '1';
-                this.sound.mute = savedMute;
-                if (this.cache.audio.exists('bgm_game') && !this.sound.get('bgm_game')) {
-                    const bgm = this.sound.add('bgm_game', { loop: true, volume: 0.4 });
-                    bgm.play();
+                try { if (this.sound.context && this.sound.context.state === 'suspended') this.sound.context.resume(); } catch (e) {}
+                let vol = Number(localStorage.getItem('gameVolume'));
+                if (Number.isNaN(vol)) vol = 0.5;
+                this.sound.volume = vol;
+                const savedMute = localStorage.getItem('gameMuted');
+                // if not explicitly muted, ensure unmuted
+                this.sound.mute = savedMute === '1' ? true : false;
+
+                if (this.cache.audio && this.cache.audio.exists('bgm_game')) {
+                    let bgm = this.sound.get('bgm_game');
+                    if (!bgm) bgm = this.sound.add('bgm_game', { loop: true, volume: vol });
+                    if (!bgm.isPlaying) bgm.play({ loop: true, volume: vol });
                 }
                 this.cameras.main.fadeOut(250, 0, 0, 0);
                 this.time.delayedCall(250, () => this.scene.start('LevelSelectScene'));
@@ -382,9 +387,11 @@ class GameScene extends Phaser.Scene {
             if (volLabel) volLabel.textContent = `${Math.round(v * 100)}%`;
             const update = (val) => {
                 const clamped = Math.max(0, Math.min(1, Number(val)));
+                // resume audio context if needed to ensure immediate response
+                try { if (this.sound.context && this.sound.context.state === 'suspended') this.sound.context.resume(); } catch (e) {}
                 this.sound.volume = clamped; // global multiplier
-                // also set directly on bgm to avoid any driver inconsistencies
-                this.sound.sounds.forEach(s => { if (s.key === 'bgm_game') s.setVolume(clamped); });
+                // apply to all active sounds immediately (bgm + sfx)
+                try { this.sound.sounds.forEach(s => { if (typeof s.setVolume === 'function') s.setVolume(clamped); }); } catch (e) {}
                 localStorage.setItem('gameVolume', String(clamped));
                 if (volLabel) volLabel.textContent = `${Math.round(clamped * 100)}%`;
                 volRange.value = String(clamped);
