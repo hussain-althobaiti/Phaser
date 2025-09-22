@@ -55,15 +55,17 @@ function wireAudioUI(sound) {
     // attach listeners only once
     if (!window.__audioUiBound) {
         if (homeBtn) {
-            homeBtn.onpointerdown = () => {
+            const goHome = (e) => {
                 try {
-                    // go to StartScene from any scene
-                    const game = Phaser.GAMES?.[0];
+                    if (e) { e.preventDefault(); e.stopPropagation(); }
+                    const game = sound.game; // أكثر وثوقية من Phaser.GAMES
                     const scenePlugin = game?.scene;
                     const activeScene = scenePlugin?.getScenes(true)?.[0];
                     activeScene?.scene.start('StartScene');
-                } catch (e) {}
+                } catch (e2) {}
             };
+            homeBtn.addEventListener('pointerdown', goHome);
+            homeBtn.addEventListener('click', goHome);
         }
         if (muteBtn) {
             muteBtn.onpointerdown = () => {
