@@ -101,6 +101,11 @@ class StartScene extends Phaser.Scene {
         this.load.image('platform', 'assets/platform.png');
         this.load.image('star', 'assets/star.png');
         this.load.image('platform1', 'assets/platform1.png');
+        // Audio
+        this.load.audio('sfx_jump', 'assets/sfx_jump.mp3');
+        this.load.audio('sfx_collect', 'assets/sfx_collect.mp3');
+        this.load.audio('sfx_win', 'assets/sfx_win.mp3');
+        this.load.audio('bgm_game', 'assets/bgm_game.mp3');
     }
 
     create() {
@@ -144,8 +149,26 @@ class StartScene extends Phaser.Scene {
         this.tweens.add({ targets: heroStar, angle: 360, duration: 4000, repeat: -1, ease: 'Linear' });
 
         this.input.once('pointerdown', () => {
-            this.cameras.main.fadeOut(250, 0, 0, 0);
-            this.time.delayedCall(250, () => this.scene.start('LevelSelectScene'));
+            const go = () => {
+                // ensure audio settings applied and bgm started on first interaction (desktop policies)
+                const savedVol = Number(localStorage.getItem('gameVolume'));
+                if (!Number.isNaN(savedVol)) this.sound.volume = savedVol;
+                const savedMute = localStorage.getItem('gameMuted') === '1';
+                this.sound.mute = savedMute;
+                if (this.cache.audio.exists('bgm_game') && !this.sound.get('bgm_game')) {
+                    const bgm = this.sound.add('bgm_game', { loop: true, volume: 0.4 });
+                    bgm.play();
+                }
+                this.cameras.main.fadeOut(250, 0, 0, 0);
+                this.time.delayedCall(250, () => this.scene.start('LevelSelectScene'));
+            };
+            if (this.sound.locked) {
+                this.sound.once('unlocked', go);
+                // trigger any minimal audio to unlock on mobile policies
+                try { this.sound.play('sfx_collect', { volume: 0, seek: 0 }); } catch (e) {}
+            } else {
+                go();
+            }
         });
     }
 }
@@ -208,6 +231,41 @@ class GameScene extends Phaser.Scene {
         this.gameOver = false;
         this.winText = null;
 
+        // Music (loop)
+        if (!this.sound.get('bgm_game')) {
+            const savedVol = Number(localStorage.getItem('gameVolume'));
+            if (!Number.isNaN(savedVol)) this.sound.volume = savedVol;
+            const savedMute = localStorage.getItem('gameMuted') === '1';
+            this.sound.mute = savedMute;
+
+            if (this.cache.audio.exists('bgm_game')) {
+                const bgm = this.sound.add('bgm_game', { loop: true, volume: 0.4 });
+                bgm.play();
+            }
+        }
+
+        // Wire audio UI if exists
+        const muteBtn = document.getElementById('mute-btn');
+        const volRange = document.getElementById('vol');
+        if (muteBtn) {
+            const syncIcon = () => muteBtn.textContent = this.sound.mute ? '🔇' : '🔈';
+            syncIcon();
+            muteBtn.onclick = () => {
+                this.sound.mute = !this.sound.mute;
+                localStorage.setItem('gameMuted', this.sound.mute ? '1' : '0');
+                syncIcon();
+            };
+        }
+        if (volRange) {
+            const v = this.sound.volume;
+            if (v != null) volRange.value = String(v);
+            volRange.oninput = (e) => {
+                const val = Number(e.target.value);
+                this.sound.volume = val;
+                localStorage.setItem('gameVolume', String(val));
+            };
+        }
+
         // Platforms
         this.platforms = this.physics.add.staticGroup();
         this.generatePlatformsFromLevel(this.level);
@@ -262,6 +320,9 @@ class GameScene extends Phaser.Scene {
         }
         if ((this.cursors.up.isDown || this.moveUp) && this.player.body.blocked.down) {
             this.player.setVelocityY(-330);
+            if (this.cache.audio.exists('sfx_jump')) {
+                this.sound.play('sfx_jump', { volume: 0.5 });
+            }
         }
     }
 
@@ -354,6 +415,9 @@ class GameScene extends Phaser.Scene {
         });
 
         this.scoreText.setText(`Stars: ${++this.collectedStars}/${this.totalStarsInLevel}`);
+        if (this.cache.audio.exists('sfx_collect')) {
+            this.sound.play('sfx_collect', { volume: 0.6 });
+        }
 
         if (this.collectedStars === this.totalStarsInLevel) {
             this.gameOver = true;
@@ -378,6 +442,8 @@ class GameScene extends Phaser.Scene {
             'All Levels Complete!\nClick to Continue',
             { fontSize: '40px', fill: '#0f0', align: 'center' }
         ).setOrigin(0.5);
+
+        this.sound.play('sfx_win', { volume: 0.7 });
 
         this.input.once('pointerdown', () => {
             this.scene.start('EndScene', { score: this.collectedStars });
