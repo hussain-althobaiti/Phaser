@@ -15,6 +15,31 @@ function wireAudioUI(sound) {
     const volRange = document.getElementById('vol');
     const volLabel = document.getElementById('vol-label');
 
+    // apply JS-driven styles for buttons
+    const styleBtn = (el) => {
+        if (!el) return;
+        const isSmall = window.matchMedia && window.matchMedia('(max-width: 480px)').matches;
+        const size = isSmall ? 48 : 40;
+        el.style.cursor = 'pointer';
+        el.style.width = size + 'px';
+        el.style.height = size + 'px';
+        el.style.fontSize = (isSmall ? 20 : 18) + 'px';
+        el.style.borderRadius = '8px';
+        el.style.border = '1px solid rgba(255,255,255,0.5)';
+        el.style.background = 'rgba(255,255,255,0.12)';
+        el.style.display = 'flex';
+        el.style.alignItems = 'center';
+        el.style.justifyContent = 'center';
+        el.style.margin = '0 4px';
+        el.style.transform = 'translateZ(0)';
+        el.onpointerdown = (el.onpointerdown ? el.onpointerdown : undefined) || el.onpointerdown;
+        el.addEventListener('pointerdown', () => { el.style.transform = 'scale(0.96)'; });
+        el.addEventListener('pointerup', () => { el.style.transform = 'scale(1)'; });
+        el.addEventListener('pointerout', () => { el.style.transform = 'scale(1)'; });
+    };
+    styleBtn(muteBtn);
+    styleBtn(homeBtn);
+
     const syncAll = () => {
         const vol = typeof sound.volume === 'number' ? sound.volume : 0.5;
         if (volRange) volRange.value = String(vol);
@@ -22,7 +47,8 @@ function wireAudioUI(sound) {
         const isMutedUI = sound.mute || vol <= 0.001;
         if (muteBtn) {
             muteBtn.textContent = isMutedUI ? '🔇' : '🔈';
-            muteBtn.classList.toggle('muted', isMutedUI);
+            muteBtn.style.background = isMutedUI ? 'rgba(220,0,0,0.35)' : 'rgba(255,255,255,0.12)';
+            muteBtn.style.borderColor = isMutedUI ? 'rgba(255,80,80,0.9)' : 'rgba(255,255,255,0.5)';
         }
     };
 
