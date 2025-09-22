@@ -250,15 +250,18 @@ class GameScene extends Phaser.Scene {
         if (muteBtn) {
             const syncIcon = () => muteBtn.textContent = this.sound.mute ? '🔇' : '🔈';
             syncIcon();
-            muteBtn.onclick = () => {
+            // immediate mute toggle on pointerdown for faster response
+            muteBtn.onpointerdown = () => {
                 this.sound.mute = !this.sound.mute;
                 localStorage.setItem('gameMuted', this.sound.mute ? '1' : '0');
                 syncIcon();
             };
         }
         if (volRange) {
-            const v = this.sound.volume;
-            if (v != null) volRange.value = String(v);
+            // default to 0.5 if no saved value
+            const v = this.sound.volume ?? 0.5;
+            this.sound.volume = v;
+            volRange.value = String(v);
             volRange.oninput = (e) => {
                 const val = Number(e.target.value);
                 this.sound.volume = val;
