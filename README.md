@@ -1,84 +1,16 @@
 # Star Game (Phaser 3)
 
-لعبة منصات بسيطة مبنية على Phaser 3 بهدف جمع النجوم عبر 10 مراحل ثابتة تزداد صعوبة تدريجيًا. تحتوي على صفحة اختيار مراحل بشكل شبكة، دعم تحكم للجوال، وتأثيرات وأنيميشن في الشاشة الرئيسية.
+Live demo: [hussain-althobaiti.github.io/Phaser](https://hussain-althobaiti.github.io/Phaser/)
 
-## المحتوى
-- نظرة عامة
-- المتطلبات
-- طريقة التشغيل
-- التحكمات
-- المراحل والتقدم
-- اختيار المراحل (Level Select)
-- الأصول (Assets)
-- تخصيص وإعدادات
-- مشاكل شائعة وحلول
+A lightweight browser platformer built with Phaser 3. Collect all stars across 10 fixed levels with gradually increasing difficulty. The game includes a level select screen, mobile-friendly on‑screen controls, and a simple sound/mute UI.
 
-## نظرة عامة
-- محرك اللعبة: Phaser 3.
-- المنصات ثابتة التحديد لكل مرحلة (10 مراحل).
-- عند جمع جميع النجوم في المرحلة تنتقل تلقائيًا للمرحلة التالية.
-- يتم حفظ أعلى نتيجة وأقصى مرحلة مفتوحة محليًا عبر localStorage.
+لعبة منصات للمتصفح مبنية على Phaser 3. هدفك جمع جميع النجوم عبر 10 مراحل ثابتة بصعوبة متصاعدة، مع صفحة اختيار مراحل، أزرار تحكم للجوال، وواجهة بسيطة للصوت/الكتم.
 
-## المتطلبات
-- متصفح حديث يدعم ES6.
-- لا توجد عملية بناء (Build) مطلوبة؛ يعمل مباشرة من ملف `index.html`.
-
-## طريقة التشغيل
-1. افتح الملف `index.html` مباشرة في المتصفح، أو
-2. يُفضَّل استخدام خادم محلي لتجنّب مشاكل مسارات الملفات:
-   - باستخدام VS Code: امتداد Live Server ثم "Open with Live Server".
-   - أو عبر بايثون: `python -m http.server 8000` ثم افتح `http://localhost:8000`.
-
-## التحكمات
-- لوحة المفاتيح:
-  - الأسهم يسار/يمين: الحركة الأفقية
-  - السهم للأعلى: القفز
-- الجوال/اللمس:
-  - أزرار افتراضية تظهر أسفل الشاشة: يسار/يمين/قفز
-
-## المراحل والتقدم
-- توجد 10 مراحل ثابتة بصعوبة متزايدة.
-- المرحلة 1 مفتوحة تلقائيًا.
-- عند إنهاء المرحلة الحالية تُفتح المرحلة التالية تلقائيًا.
-- يتم حفظ أقصى مرحلة مفتوحة في `localStorage` تحت المفتاح `maxUnlockedLevel`.
-
-## اختيار المراحل (Level Select)
-- عند بدء اللعبة تظهر شاشة البداية، ثم شاشة اختيار المراحل على شكل شبكة 2×5.
-- المراحل غير المفتوحة تظهر بلون باهت مع رمز قفل ولا يمكن النقر عليها.
-- المراحل المفتوحة قابلة للنقر للبدء مباشرة.
-
-## الأصول (Assets)
-تأكد من وجود الأصول التالية داخل مجلد `assets/`:
-- `Player.png` — شخصية اللاعب
-- `platform.png` — منصة أساسية
-- `platform1.png` — منصة ديكورية (الشاشة الرئيسية)
-- `star.png` — النجوم (جمع/Particles)
-
-ملاحظة: أسماء الملفات حساسة لحالة الأحرف على بعض الأنظمة/الخوادم. تأكد من التطابق مع ما في الكود.
-
-## تخصيص وإعدادات
-- الجاذبية والفيزياء: في كائن `config` داخل `game.js`.
-- بيانات المراحل: المصفوفة `LEVELS` في بداية `game.js`.
-- توزيع النجوم: الدالة `placeStarsOnPlatforms(level)` داخل مشهد `GameScene`.
-- شاشة المراحل: مشهد `LevelSelectScene`.
-- الحفظ المحلي:
-  - `highScore` — أعلى نتيجة
-  - `maxUnlockedLevel` — أقصى مرحلة مفتوحة
-
-## مشاكل شائعة وحلول
-- لا تظهر اللعبة:
-  - حدّث الصفحة بقوة (Ctrl+F5).
-  - افتح تبويب Console في أدوات المطوِّر واعرض أي أخطاء.
-  - تأكد من تحميل جميع الأصول دون أخطاء 404 في تبويب Network.
-  - شغّل عبر خادم محلي (Live Server) لتفادي قيود المسارات.
-- الصور لا تظهر:
-  - راجع أسماء الملفات وحالة الأحرف (`Player.png` وليس `player.png`).
-- الأداء ضعيف على الجوال:
-  - خفّض عدد الـparticles أو عطّل debug للفيزياء.
-
-## التقنيات
-- Phaser 3 (يتم استيراده من CDN في `index.html`).
-
-استمتع باللعب وبناء مراحل إضافية! ✨
+## General info / معلومات عامة
+- Engine: Phaser 3 (runs fully in the browser)
+- Levels: 10 fixed levels, difficulty increases progressively
+- Controls: Keyboard (Arrows/WASD) and on‑screen mobile buttons
+- Progress: Auto‑advance after collecting all stars; saves high score and max unlocked level in localStorage
+- How to run: open `index.html` directly or use a static server (e.g., VS Code Live Server or GitHub Pages)
 
 
